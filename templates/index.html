@@ -1,0 +1,211 @@
+<!Doctype html>
+<html lang="ko">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css"
+          integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm"
+          crossorigin="anonymous">
+
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+            integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+            crossorigin="anonymous"></script>
+
+    <link href="https://fonts.googleapis.com/css?family=Stylish&display=swap" rel="stylesheet">
+
+    <title>SW사관학교 정글 | 간단메모</title>
+
+    <style type="text/css">
+        * {
+            font-family: "Stylish", sans-serif;
+        }
+
+        .wrap {
+            width: 900px;
+            margin: auto;
+        }
+
+
+        .posting-box {
+            width: 500px;
+        }
+
+        .title-line {
+            display: inline;
+        }
+
+        .title-btn {
+            background-color: gray;
+            color: white;
+            font-size: 30px;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .list {
+
+            border-style: solid;
+            border-color: #d8dbde;
+            width: 300px;
+            margin: 10px;
+            border-width: 1px;
+            padding: 5px;
+            border-radius: 3px;
+        }
+
+        .edit-btn {
+            background-color: gray;
+            color: white;
+            font-size: 10px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .delete-btn {
+            background-color: black;
+            color: white;
+            font-size: 10px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .wrap-2 {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .content-btn {
+            font-size: 10px;
+            background-color: dodgerblue;
+            color: white;
+            border-style: none;
+            border-radius: 3px;
+        }
+
+    </style>
+    <script>
+        $(document).ready(function () {
+            listing();
+        });
+
+
+        function edit(memo_id) {
+            // todo: mid 맞게 찾기
+            if ($(`[mid=list-${memo_id}]`).css("display") == "block") {
+                $(`[mid=list-${memo_id}]`).css('display', 'none');
+                $(`[mid=edit-${memo_id}]`).css('display', 'block');
+            } else {
+                $(`[mid=list-${memo_id}]`).css('display', 'block');
+                $(`[mid=edit-${memo_id}]`).css('display', 'none');
+            }
+        }
+
+        function posting() {
+
+            let title = $('#title').val()
+            let content = $('#content').val()
+
+            $.ajax({
+                type: "POST",
+                url: "/memo",
+                data: {title_give: title, content_give: content},
+                success: function (response) {
+                    alert(response["msg"]);
+                    window.location.reload();
+                }
+            })
+        }
+
+        function editing(memo_id) {
+            let newtitle = $(`#title-${memo_id}`).val()
+            let newcontent = $(`#content-${memo_id}`).val()
+
+            $.ajax({
+                type: "POST",
+                url: "/memo/edit",
+                data: {memo_id: memo_id, title_give: newtitle, content_give: newcontent},
+                success: function (response) {
+                    alert(response["msg"]);
+                    window.location.reload()
+                }
+            })
+            edit(memo_id);
+        }
+
+        function listing() {
+
+            $.ajax({
+                type: "GET",
+                url: "/memo",
+                data: {},
+                success: function (response) {
+                    let memos = response['all_memos']
+                    for (let i = 0; i < memos.length; i++) {
+                        let title = memos[i]['title']
+                        let content = memos[i]['content']
+                        let memo_id = memos[i]['_id']
+
+                        let temp_html = `<div class="list">
+                                            <div class="list-box" id="list-box" mid="list-${memo_id}">
+                                                <h5>${title}</h5>
+                                                <p>${content}</p>
+                                                <button onclick=edit('${memo_id}') class="edit-btn">수정</button>
+                                                <button class="delete-btn" onclick=deleting('${memo_id}')>삭제</button>
+                                            </div>
+                                            <div class="list-edit" id="edit-box" mid="edit-${memo_id}" style='display:none'>
+                                                <div class="form-group">
+                                                    <input type="email" class="form-control" id="title-${memo_id}" placeholder=${title} value=${title}>
+                                                </div>
+                                                <div class="form-group">
+                                                    <textarea class="form-control" id="content-${memo_id}" rows="3" placeholder=${content}>${content}</textarea>
+                                                </div>
+                                                <button onclick=editing('${memo_id}') type="button" class="content-btn">저장</button>
+                                            </div>
+                                        </div>`
+                        $('#memo_box').append(temp_html)
+                    }
+                }
+            })
+        }
+
+        function deleting(memo_id) {
+                $.ajax({
+                    type: 'POST',
+                    url: '/memo/delete',
+                    data: {memo_id: memo_id},
+                    success: function (response) {
+                        alert(response['msg']);
+                        window.location.reload()
+                    }
+                });
+            }
+    </script>
+
+</head>
+
+<body>
+<div class="wrap">
+    <div class="jumbotron jumbotron-fluid">
+        <div class="container">
+            <h1 class="title-line">나홀로 메모장</h1>
+            <button class="title-btn">ver2.0</button>
+            <div class="posting-box">
+                <div class="form-group">
+                    <input type="email" class="form-control" id="title" placeholder="메모 제목을 입력하세요">
+                </div>
+                <div class="form-group">
+                    <textarea class="form-control" id="content" rows="3" placeholder="내용을 입력하세요"></textarea>
+                </div>
+                <button onclick="posting()" type="button" class="btn btn-primary">저장하기</button>
+            </div>
+        </div>
+    </div>
+    <div class="wrap-2" id="memo_box">
+    </div>
+</div>
+</body>
+
+</html>
